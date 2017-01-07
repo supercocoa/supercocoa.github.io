@@ -1,0 +1,298 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>React Native Android版核心层js-bridge实现浅析 | supercocoa&#39;s blog</title>
+  <meta name="author" content="supercocoa">
+  
+  <meta name="description" content="supercocoa&#39;s blog">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="React Native Android版核心层js-bridge实现浅析"/>
+  <meta property="og:site_name" content="supercocoa&#39;s blog"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  
+  
+    <link href="/myfavicon.png" rel="icon">
+  
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/themes/paper.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/font-awesome.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/responsive.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/highlight.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/google-fonts.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+  <script src="/js/jquery-2.0.3.min.js"></script>
+
+  <!-- analytics -->
+  
+
+
+
+</head>
+
+ <body>  
+  <nav id="main-nav" class="navbar  navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+      <button type="button" class="navbar-header navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+	<span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="/">supercocoa&#39;s blog</a>
+      <div class="collapse navbar-collapse nav-menu">
+		<ul class="nav navbar-nav">
+		  
+		  <li>
+			<a href="/archives" title="all the articles.">
+			  <i class="fa fa-archive"></i>archives
+			</a>
+		  </li>
+		  
+		  <li>
+			<a href="/tags" title="all the tags.">
+			  <i class="fa fa-tags"></i>tags
+			</a>
+		  </li>
+		  
+		</ul>
+      </div>
+    </div> <!-- container -->
+</nav>
+<div class="clearfix"></div>
+
+  <div class="container">
+  	<div class="content">
+    	 
+
+
+	
+		<div class="page-header ">		
+			<h1 class="title "> React Native Android版核心层js-bridge实现浅析</h1>
+		</div>		
+	
+
+
+
+
+
+
+<div class="row post">
+	<!-- cols -->
+	
+	<div id="top_meta"></div>
+	<div class="col-md-9">
+	
+
+	<!-- content -->
+	<div class="mypage">		
+	  		
+
+	  <p>这是之前在android版刚出来不久时在内部发的一篇浅析，现在同步上来，这之间，版本由于快速变动或多或少有些许出入，但大体思路暂时未变。</p>
+<p>react native的<code>android</code>版于上周发布，然后花了点时间试了下，从几个demo的体验来看都挺流畅，具体环境搭建与基本介绍，可以看看官方的文档说明。<br>之后周末又花了点时间看了下内部的实现，这里主要来简单介绍下java层是如何与js绑定的。</p>
+<p>整体架构上，可以分为<code>java层&lt;-&gt;c++层&lt;-&gt;js</code>层，其中java层作为入口，主要是对整体流程的控制，模块的配置。c++层是对JavaScriptCore接口的封装（每个应用自己背一个js解释器），直接执行js脚本并获取返回值。js层则是界面的布局与事件的响应处理。</p>
+<h3 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h3><figure class="highlight java"><figcaption><span>MoviesActivity.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MoviesActivity</span> <span class="keyword">extends</span> <span class="title">Activity</span> <span class="keyword">implements</span> <span class="title">DefaultHardwareBackBtnHandler</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">private</span> ReactInstanceManager mReactInstanceManager;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span></div><div class="line">  <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">    <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">    setContentView(R.layout.activity_main);</div><div class="line"></div><div class="line">    mReactInstanceManager = ReactInstanceManager.builder()</div><div class="line">        .setApplication(getApplication())</div><div class="line">        .setBundleAssetName(<span class="string">"MoviesApp.android.bundle"</span>)</div><div class="line">        .setJSMainModuleName(<span class="string">"Examples/Movies/MoviesApp.android"</span>)</div><div class="line">        .addPackage(<span class="keyword">new</span> MainReactPackage())</div><div class="line">        .setUseDeveloperSupport(<span class="keyword">true</span>)</div><div class="line">        .setInitialLifecycleState(LifecycleState.RESUMED)</div><div class="line">        .build();</div><div class="line"></div><div class="line">    ((ReactRootView) findViewById(R.id.react_root_view))</div><div class="line">        .startReactApplication(mReactInstanceManager, <span class="string">"MoviesApp"</span>, <span class="keyword">null</span>);</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p>入口上，主要是在相应使用React的Activity中加入一个ReactRootView，在Activity的onCreate中，通过ReactRootView启动React。这里的<code>addPackage</code>是配置应用所需的java模块与js模块，这个后面会细说。然后React的启动中主要会构造React的context，加载模块配置表，初始化<code>CatalystInstance</code>（java与js调用的高层接口） 与<code>ReactBridge</code>（jni接口封装），最后通过<code>AppRegistry</code>调用到js层的入口完成启动。<br><figure class="highlight java"><figcaption><span>ReactInstanceManager.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">attachMeasuredRootViewToInstance</span><span class="params">(</span></span></div><div class="line">    ReactRootView rootView,</div><div class="line">    CatalystInstance catalystInstance) &#123;</div><div class="line">  UiThreadUtil.assertOnUiThread();</div><div class="line"></div><div class="line">  <span class="comment">// Reset view content as it's going to be populated by the application content from JS</span></div><div class="line">  rootView.removeAllViews();</div><div class="line">  rootView.setId(View.NO_ID);</div><div class="line"></div><div class="line">  UIManagerModule uiManagerModule = catalystInstance.getNativeModule(UIManagerModule.class);</div><div class="line">  <span class="keyword">int</span> rootTag = uiManagerModule.addMeasuredRootView(rootView);</div><div class="line">  <span class="meta">@Nullable</span> Bundle launchOptions = rootView.getLaunchOptions();</div><div class="line">  WritableMap initialProps = launchOptions != <span class="keyword">null</span></div><div class="line">      ? Arguments.fromBundle(launchOptions)</div><div class="line">      : Arguments.createMap();</div><div class="line">  String jsAppModuleName = rootView.getJSModuleName();</div><div class="line"></div><div class="line">  WritableNativeMap appParams = <span class="keyword">new</span> WritableNativeMap();</div><div class="line">  appParams.putDouble(<span class="string">"rootTag"</span>, rootTag);</div><div class="line">  appParams.putMap(<span class="string">"initialProps"</span>, initialProps);</div><div class="line">  catalystInstance.getJSModule(AppRegistry.class).runApplication(jsAppModuleName, appParams);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="模块注册"><a href="#模块注册" class="headerlink" title="模块注册"></a>模块注册</h3><p>React Native中，需要用户自己定义需要的配置<code>ReactPackage</code>，显式的声明哪些java类或js脚本是api，是两边都需要的。的然后在启动中注册后，会同时在java端与js端共用一份模块配置表，主要以<code>{moduleID, methodID}</code>定位到某个java模块或js模块的方法。<br><figure class="highlight java"><figcaption><span>CoreModulesPackage.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* package */</span> <span class="class"><span class="keyword">class</span> <span class="title">CoreModulesPackage</span> <span class="keyword">implements</span> <span class="title">ReactPackage</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> ReactInstanceManager mReactInstanceManager;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> DefaultHardwareBackBtnHandler mHardwareBackBtnHandler;</div><div class="line"></div><div class="line">  CoreModulesPackage(</div><div class="line">      ReactInstanceManager reactInstanceManager,</div><div class="line">      DefaultHardwareBackBtnHandler hardwareBackBtnHandler) &#123;</div><div class="line">    mReactInstanceManager = reactInstanceManager;</div><div class="line">    mHardwareBackBtnHandler = hardwareBackBtnHandler;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span></div><div class="line">  <span class="function"><span class="keyword">public</span> List&lt;NativeModule&gt; <span class="title">createNativeModules</span><span class="params">(</span></span></div><div class="line">      ReactApplicationContext catalystApplicationContext) &#123;</div><div class="line">    <span class="keyword">return</span> Arrays.&lt;NativeModule&gt;asList(</div><div class="line">        <span class="keyword">new</span> AnimationsDebugModule(</div><div class="line">            catalystApplicationContext,</div><div class="line">            mReactInstanceManager.getDevSupportManager().getDevSettings()),</div><div class="line">        <span class="keyword">new</span> AndroidInfoModule(),</div><div class="line">        <span class="keyword">new</span> DeviceEventManagerModule(catalystApplicationContext, mHardwareBackBtnHandler),</div><div class="line">        <span class="keyword">new</span> ExceptionsManagerModule(mReactInstanceManager.getDevSupportManager()),</div><div class="line">        <span class="keyword">new</span> Timing(catalystApplicationContext),</div><div class="line">	...</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="meta">@Override</span></div><div class="line">  <span class="keyword">public</span> List&lt;Class&lt;? extends JavaScriptModule&gt;&gt; createJSModules() &#123;</div><div class="line">    <span class="keyword">return</span> Arrays.asList(</div><div class="line">        DeviceEventManagerModule.RCTDeviceEventEmitter.class,</div><div class="line">        JSTimersExecution.class,</div><div class="line">        RCTEventEmitter.class,</div><div class="line">        AppRegistry.class,</div><div class="line">        ReactNative.class,</div><div class="line">        DebugComponentOwnershipModule.RCTDebugComponentOwnership.class);</div><div class="line">  &#125;</div><div class="line">  ...</div></pre></td></tr></table></figure></p>
+<p>模块配置</p>
+<figure class="highlight java"><figcaption><span>NativeModuleRegistry.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NativeModuleRegistry</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> ArrayList&lt;ModuleDefinition&gt; mModuleTable;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;Class&lt;NativeModule&gt;, NativeModule&gt; mModuleInstances;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> String mModuleDescriptions;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> ArrayList&lt;OnBatchCompleteListener&gt; mBatchCompleteListenerModules;</div><div class="line">  ...</div></pre></td></tr></table></figure>
+<p>java模块注册表</p>
+<figure class="highlight java"><figcaption><span>JavaScriptModuleRegistry.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*package*/</span> <span class="class"><span class="keyword">class</span> <span class="title">JavaScriptModuleRegistry</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> HashMap&lt;Class&lt;? extends JavaScriptModule&gt;, JavaScriptModule&gt; mModuleInstances;</div><div class="line">  ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>js模块注册表</p>
+<figure class="highlight java"><figcaption><span>ToastModule.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ToastModule</span> <span class="keyword">extends</span> <span class="title">ReactContextBaseJavaModule</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="title">ToastModule</span><span class="params">(ReactApplicationContext reactContext)</span> </span>&#123;</div><div class="line">    <span class="keyword">super</span>(reactContext);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  ...</div><div class="line"></div><div class="line">  <span class="meta">@ReactMethod</span></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">show</span><span class="params">(String message, <span class="keyword">int</span> duration)</span> </span>&#123;</div><div class="line">    Toast.makeText(getReactApplicationContext(), message, duration).show();</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>java模块主要是通过<code>@ReactMethod</code>注解表明该方法为可以导出到js的方法</p>
+<figure class="highlight java"><figcaption><span>AppRegistry.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * JS module interface - main entry point for launching react application for a given key.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">AppRegistry</span> <span class="keyword">extends</span> <span class="title">JavaScriptModule</span> </span>&#123;</div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">runApplication</span><span class="params">(String appKey, WritableMap appParameters)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight java"><figcaption><span>JavaScriptModuleRegistry.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">JavaScriptModuleInvocationHandler</span> <span class="keyword">implements</span> <span class="title">InvocationHandler</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> CatalystInstance mCatalystInstance;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> JavaScriptModuleRegistration mModuleRegistration;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">JavaScriptModuleInvocationHandler</span><span class="params">(</span></span></div><div class="line">        CatalystInstance catalystInstance,</div><div class="line">        JavaScriptModuleRegistration moduleRegistration) &#123;</div><div class="line">      mCatalystInstance = catalystInstance;</div><div class="line">      mModuleRegistration = moduleRegistration;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="keyword">public</span> <span class="meta">@Nullable</span> <span class="function">Object <span class="title">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">      String tracingName = mModuleRegistration.getTracingName(method);</div><div class="line">      mCatalystInstance.callFunction(</div><div class="line">          mModuleRegistration.getModuleId(),</div><div class="line">          mModuleRegistration.getMethodId(method),</div><div class="line">          Arguments.fromJavaArgs(args),</div><div class="line">          tracingName);</div><div class="line">      <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">    &#125;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p>js模块是继承JavaScriptModule的interface，与之对应的是在js侧有个同名的js脚本，运行时通过<code>动态代理</code>技术，生成实现，在模块配置表中查找到该js，然后发起调用。</p>
+<figure class="highlight java"><figcaption><span>CatalystInstance.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initializeBridge</span><span class="params">(</span></span></div><div class="line">      JavaScriptExecutor jsExecutor,</div><div class="line">      NativeModuleRegistry registry,</div><div class="line">      JavaScriptModulesConfig jsModulesConfig,</div><div class="line">      JSBundleLoader jsBundleLoader) &#123;</div><div class="line">    mCatalystQueueConfiguration.getJSQueueThread().assertIsOnThread();</div><div class="line">    Assertions.assertCondition(mBridge == <span class="keyword">null</span>, <span class="string">"initializeBridge should be called once"</span>);</div><div class="line">    mBridge = <span class="keyword">new</span> ReactBridge(</div><div class="line">        jsExecutor,</div><div class="line">        <span class="keyword">new</span> NativeModulesReactCallback(),</div><div class="line">        mCatalystQueueConfiguration.getNativeModulesQueueThread());</div><div class="line">    mBridge.setGlobalVariable(</div><div class="line">        <span class="string">"__fbBatchedBridgeConfig"</span>,</div><div class="line">        buildModulesConfigJSONProperty(registry, jsModulesConfig));</div><div class="line">    jsBundleLoader.loadScript(mBridge);</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p>将模块配置表作为全局变量导入到js层，</p>
+<h3 id="调用"><a href="#调用" class="headerlink" title="调用"></a>调用</h3><p>java与js之前的调用，两边都是以<code>{moduleID, methodID}</code>的形式作为一个<code>call</code>，然后一端在之前的模块配置表里查找注册的模块与方法。</p>
+<h4 id="java调用js"><a href="#java调用js" class="headerlink" title="java调用js"></a>java调用js</h4><p>是直接通过c++层对JavaScriptCore封装的接口调用到相应的脚本。<br><figure class="highlight java"><figcaption><span>ReactBridge.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">loadScriptFromAssets</span><span class="params">(AssetManager assetManager, String assetName)</span></span>;</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">loadScriptFromNetworkCached</span><span class="params">(String sourceURL, @Nullable String tempFileName)</span></span>;</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">callFunction</span><span class="params">(<span class="keyword">int</span> moduleId, <span class="keyword">int</span> methodId, NativeArray arguments)</span></span>;</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">invokeCallback</span><span class="params">(<span class="keyword">int</span> callbackID, NativeArray arguments)</span></span>;</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">native</span> <span class="keyword">void</span> <span class="title">setGlobalVariable</span><span class="params">(String propertyName, String jsonEncodedArgument)</span></span>;</div><div class="line">...</div></pre></td></tr></table></figure></p>
+<figure class="highlight c++"><figcaption><span>OnLoad.cpp</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">callFunction</span><span class="params">(JNIEnv* env, jobject obj, jint moduleId, jint methodId,</span></span></div><div class="line">                         NativeArray::jhybridobject args) &#123;</div><div class="line">  <span class="keyword">auto</span> bridge = extractRefPtr&lt;Bridge&gt;(env, obj);</div><div class="line">  <span class="keyword">auto</span> arguments = cthis(wrap_alias(args));</div><div class="line">  <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;folly::dynamic&gt; call&#123;</div><div class="line">    (<span class="keyword">double</span>) moduleId,</div><div class="line">    (<span class="keyword">double</span>) methodId,</div><div class="line">    <span class="built_in">std</span>::move(arguments-&gt;<span class="built_in">array</span>),</div><div class="line">  &#125;;</div><div class="line">  <span class="keyword">try</span> &#123;</div><div class="line">    bridge-&gt;executeJSCall(<span class="string">"BatchedBridge"</span>, <span class="string">"callFunctionReturnFlushedQueue"</span>, <span class="built_in">std</span>::move(call));</div><div class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</div><div class="line">    translatePendingCppExceptionToJavaException();</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>c++层，直接调用<code>BatchedBridge.js</code>即<code>MessageQueue.js</code>中的<code>callFunctionReturnFlushedQueue</code>，最终会加载js对应的模块并调用到相应方法。<br><figure class="highlight js"><figcaption><span>MessageQueue.js</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">callFunctionReturnFlushedQueue(<span class="built_in">module</span>, method, args) &#123;</div><div class="line">    guard(<span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">this</span>.__callFunction(<span class="built_in">module</span>, method, args));</div><div class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.flushedQueue();</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  ...</div><div class="line"></div><div class="line">__callFunction(<span class="built_in">module</span>, method, args) &#123;</div><div class="line">    BridgeProfiling.profile(<span class="function"><span class="params">()</span> =&gt;</span> <span class="string">`<span class="subst">$&#123;<span class="built_in">module</span>&#125;</span>.<span class="subst">$&#123;method&#125;</span>(<span class="subst">$&#123;stringifySafe(args)&#125;</span>)`</span>);</div><div class="line">    <span class="keyword">if</span> (<span class="built_in">isFinite</span>(<span class="built_in">module</span>)) &#123;</div><div class="line">      method = <span class="keyword">this</span>._methodTable[<span class="built_in">module</span>][method];</div><div class="line">      <span class="built_in">module</span> = <span class="keyword">this</span>._moduleTable[<span class="built_in">module</span>];</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (__DEV__ &amp;&amp; SPY_MODE) &#123;</div><div class="line">      <span class="built_in">console</span>.log(<span class="string">'N-&gt;JS : '</span> + <span class="built_in">module</span> + <span class="string">'.'</span> + method + <span class="string">'('</span> + <span class="built_in">JSON</span>.stringify(args) + <span class="string">')'</span>);</div><div class="line">    &#125;</div><div class="line">    <span class="built_in">module</span> = <span class="keyword">this</span>._require(<span class="built_in">module</span>);</div><div class="line">    <span class="built_in">module</span>[method].apply(<span class="built_in">module</span>, args);</div><div class="line">    BridgeProfiling.profileEnd();</div><div class="line">  &#125;</div></pre></td></tr></table></figure></p>
+<h4 id="js调用java"><a href="#js调用java" class="headerlink" title="js调用java"></a>js调用java</h4><p>React Native的设计是js<code>不会</code>直接调用java，而是将调用的call插入到一个js层的一个<code>MessageQueue</code>中，<code>等</code>java过来调用。<br><figure class="highlight js"><figcaption><span>MessageQueue.js</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">MessageQueue</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">constructor</span>(remoteModules, localModules, customRequire) &#123;</div><div class="line">    <span class="keyword">this</span>.RemoteModules = &#123;&#125;;</div><div class="line"></div><div class="line">    <span class="keyword">this</span>._require = customRequire || <span class="built_in">require</span>;</div><div class="line">    <span class="keyword">this</span>._queue = [[],[],[]];</div><div class="line">    <span class="keyword">this</span>._moduleTable = &#123;&#125;;</div><div class="line">    <span class="keyword">this</span>._methodTable = &#123;&#125;;</div><div class="line">    <span class="keyword">this</span>._callbacks = [];</div><div class="line">    <span class="keyword">this</span>._callbackID = <span class="number">0</span>;</div><div class="line">...</div></pre></td></tr></table></figure></p>
+<figure class="highlight js"><figcaption><span>MessageQueue.js</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">__nativeCall(<span class="built_in">module</span>, method, params, onFail, onSucc) &#123;</div><div class="line">    <span class="keyword">if</span> (onFail || onSucc) &#123;</div><div class="line">      <span class="comment">// eventually delete old debug info</span></div><div class="line">      (<span class="keyword">this</span>._callbackID &gt; (<span class="number">1</span> &lt;&lt; <span class="number">5</span>)) &amp;&amp;</div><div class="line">        (<span class="keyword">this</span>._debugInfo[<span class="keyword">this</span>._callbackID &gt;&gt; <span class="number">5</span>] = <span class="literal">null</span>);</div><div class="line"></div><div class="line">      <span class="keyword">this</span>._debugInfo[<span class="keyword">this</span>._callbackID &gt;&gt; <span class="number">1</span>] = [<span class="built_in">module</span>, method];</div><div class="line">      onFail &amp;&amp; params.push(<span class="keyword">this</span>._callbackID);</div><div class="line">      <span class="keyword">this</span>._callbacks[<span class="keyword">this</span>._callbackID++] = onFail;</div><div class="line">      onSucc &amp;&amp; params.push(<span class="keyword">this</span>._callbackID);</div><div class="line">      <span class="keyword">this</span>._callbacks[<span class="keyword">this</span>._callbackID++] = onSucc;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">this</span>._queue[MODULE_IDS].push(<span class="built_in">module</span>);</div><div class="line">    <span class="keyword">this</span>._queue[METHOD_IDS].push(method);</div><div class="line">    <span class="keyword">this</span>._queue[PARAMS].push(params);</div><div class="line">    <span class="keyword">if</span> (__DEV__ &amp;&amp; SPY_MODE &amp;&amp; <span class="built_in">isFinite</span>(<span class="built_in">module</span>)) &#123;</div><div class="line">      <span class="built_in">console</span>.log(<span class="string">'JS-&gt;N : '</span> + <span class="keyword">this</span>._remoteModuleTable[<span class="built_in">module</span>] + <span class="string">'.'</span> +</div><div class="line">        <span class="keyword">this</span>._remoteMethodTable[<span class="built_in">module</span>][method] + <span class="string">'('</span> + <span class="built_in">JSON</span>.stringify(params) + <span class="string">')'</span>);</div><div class="line">    &#125;</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p>具体是在java层主动调用或各种事件到来时（触摸，刷新，timer…），都会调用上文说的java层的callFunction，从而最终调用上文说到的<code>callFunctionReturnFlushedQueue</code>，注意该方法会在执行相应js调用后调用<code>flushedQueue</code>并返回MessageQueue.<br><figure class="highlight js"><figcaption><span>MessageQueue.js</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">flushedQueue() &#123;</div><div class="line">    BridgeProfiling.profile(<span class="string">'JSTimersExecution.callImmediates()'</span>);</div><div class="line">    guard(<span class="function"><span class="params">()</span> =&gt;</span> JSTimersExecution.callImmediates());</div><div class="line">    BridgeProfiling.profileEnd();</div><div class="line">    <span class="keyword">let</span> queue = <span class="keyword">this</span>._queue;</div><div class="line">    <span class="keyword">this</span>._queue = [[],[],[]];</div><div class="line">    <span class="keyword">return</span> queue[<span class="number">0</span>].length ? queue : <span class="literal">null</span>;</div><div class="line">  &#125;</div></pre></td></tr></table></figure></p>
+<p>返回的queue格式化为json经由c++返回给java<br><figure class="highlight c++"><figcaption><span>Bridge.cpp</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">executeJSCall</span><span class="params">(</span></span></div><div class="line">      <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; moduleName,</div><div class="line">      <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; methodName,</div><div class="line">      <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;folly::dynamic&gt;&amp; arguments) &#123;</div><div class="line">    <span class="keyword">auto</span> returnedJSON = m_jsExecutor-&gt;executeJSCall(moduleName, methodName, arguments);</div><div class="line">    m_callback(parseMethodCalls(returnedJSON));</div><div class="line">  &#125;</div></pre></td></tr></table></figure></p>
+<figure class="highlight c++"><figcaption><span>OnLoad.cpp</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">create</span><span class="params">(JNIEnv* env, jobject obj, jobject executor, jobject callback,</span></span></div><div class="line">                   jobject callbackQueueThread) &#123;</div><div class="line">  <span class="keyword">auto</span> weakCallback = createNew&lt;WeakReference&gt;(callback);</div><div class="line">  <span class="keyword">auto</span> weakCallbackQueueThread = createNew&lt;WeakReference&gt;(callbackQueueThread);</div><div class="line">  <span class="keyword">auto</span> bridgeCallback = [weakCallback, weakCallbackQueueThread] (<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;MethodCall&gt; calls) &#123;</div><div class="line">    dispatchCallbacksToJava(weakCallback, weakCallbackQueueThread, <span class="built_in">std</span>::move(calls));</div><div class="line">  &#125;;</div><div class="line">  <span class="keyword">auto</span> nativeExecutorFactory = extractRefPtr&lt;JSExecutorFactory&gt;(env, executor);</div><div class="line">  <span class="keyword">auto</span> bridge = createNew&lt;Bridge&gt;(nativeExecutorFactory, bridgeCallback);</div><div class="line">  setCountableForJava(env, obj, <span class="built_in">std</span>::move(bridge));</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight java"><figcaption><span>CatalysInstance.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">NativeModulesReactCallback</span> <span class="keyword">implements</span> <span class="title">ReactCallback</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">call</span><span class="params">(<span class="keyword">int</span> moduleId, <span class="keyword">int</span> methodId, ReadableNativeArray parameters)</span> </span>&#123;</div><div class="line">      mCatalystQueueConfiguration.getNativeModulesQueueThread().assertIsOnThread();</div><div class="line"></div><div class="line">      <span class="comment">// Suppress any callbacks if destroyed - will only lead to sadness.</span></div><div class="line">      <span class="keyword">if</span> (mDestroyed) &#123;</div><div class="line">        <span class="keyword">return</span>;</div><div class="line">      &#125;</div><div class="line"></div><div class="line">      mJavaRegistry.call(CatalystInstance.<span class="keyword">this</span>, moduleId, methodId, parameters);</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>最终java层依旧是查表调用对应的方法。</p>
+<h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><p>线程方面 主要分为了三种线程</p>
+<ul>
+<li><code>UIQueueThread</code>   android本身的ui线程，最终绘制肯定还得在这里</li>
+<li><code>NativeModulesQueueThread</code>   js调过来的native module的方法执行的线程</li>
+<li><code>JSQueueThread</code>   js解释器线程 <figure class="highlight java"><figcaption><span>CatalystQueueConfiguration.java</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Specifies which &#123;<span class="doctag">@link</span> MessageQueueThread&#125;s must be used to run the various contexts of</div><div class="line"> * execution within catalyst (Main UI thread, native modules, and JS). Some of these queues *may* be</div><div class="line"> * the same but should be coded against as if they are different.</div><div class="line"> *</div><div class="line"> * UI Queue Thread: The standard Android main UI thread and Looper. Not configurable.</div><div class="line"> * Native Modules Queue Thread: The thread and Looper that native modules are invoked on.</div><div class="line"> * JS Queue Thread: The thread and Looper that JS is executed on.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CatalystQueueConfiguration</span> </span>&#123;</div><div class="line"></div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> MessageQueueThread mUIQueueThread;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> MessageQueueThread mNativeModulesQueueThread;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> MessageQueueThread mJSQueueThread;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>以上就是React Native Android版java和js间相互调用的主要实现，从demo的体验感觉整体上比较流畅，起码简单的页面感知上和native区分不太开。而且只要reload一遍js bundle，不用重启不用切换，页面立即原地更新，这个应该是一个很大的卖点。</p>
+<p>代码上整体分层挺清晰，集合了包括fresco/okhttp/botls/boost/folly等不少开源库，java层用了动态代理，c++层的代码是用c++11封装的，js中也是使用了不少es6的新特性，还有jsx，css layout什么的，模式上也是状态驱动UI，整体实现感觉很是前卫，但是要完全掌握可能要java/c++/js三修，对现有的开发模式是一个新的挑战。而且由于依赖库太多，导致安装包略肿大，光so就有4.5MB，这给集成到现有项目带来了不少问题。</p>
+<p>另外，由于监听了<code>Choreographer</code>的事件，使用了些高版本的api，导致<code>4.1</code>以下不能使用React。</p>
+<p>而且实际使用中，由于react本身其实主要还是帮助做绑定，导致稍微复杂一点的界面和逻辑，还是少不了native的大量参与，除非导出的组件已经足够用或者界面足够简单。</p>
+<p>总的来说，虽然可能刚出来还存在不少问题，包大小与开发方式也需要进一步的探索，但react native的整体设计与实现还是很值得学习的，或许今后会带来app开发新的思路吧。</p>
+	  
+	</div>
+
+	<div>
+  	<center>
+	<div class="pagination">
+<ul class="pagination">
+	 
+				
+    	<li class="prev"><a href="/2015/10/24/shadowsocks-httpproxy/" class="alignleft prev"><i class="fa fa-arrow-circle-o-left"></i>Prev</a></li>
+  		
+
+        <li><a href="/archives"><i class="fa fa-archive"></i>Archive</a></li>
+
+		
+		   <li class="next"><a href="/2015/02/08/mac_update_mem/" class="alignright next">Next<i class="fa fa-arrow-circle-o-right"></i></a></li>         
+        
+	
+</ul>
+</div>
+
+    </center>
+	</div>
+
+    <!-- share -->
+    
+        
+    <div class="bdsharebuttonbox">
+        <a href="#" class="bds_more" data-cmd="more"></a>
+        <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+        <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+        <a href="#" class="bds_fbook" data-cmd="fbook" title="分享到Facebook"></a>
+        <a href="#" class="bds_twi" data-cmd="twi" title="分享到Twitter"></a>
+        <a href="#" class="bds_linkedin" data-cmd="linkedin" title="分享到linkedin"></a>
+        <a href="#" class="bds_evernotecn" data-cmd="evernotecn" title="分享到印象笔记"></a>
+        <a href="#" class="bds_youdao" data-cmd="youdao" title="分享到有道云笔记"></a>
+        <a href="#" class="bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+    </div>
+    <script>
+        window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"1","bdSize":"24"},"share":{}};
+        with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+    </script>
+
+
+        
+
+    
+	
+	<!-- comment -->
+	
+<section id="comment">
+  <h2 class="title">Comments</h2>
+
+  
+</section>
+
+	</div> <!-- col-md-9/col-md-12 -->
+		
+	
+	<div id="side_meta">
+		<div class="col-md-3" id="post_meta"> 
+
+	<!-- date -->
+	
+	<div class="meta-widget">
+	<i class="fa fa-clock-o"></i>
+	Sep 26 2015 
+	</div>
+	
+
+	<!-- categories -->
+    
+	<div class="meta-widget">
+	<a data-toggle="collapse" data-target="#categorys"><i class="fa fa-folder"></i></a>	
+    <ul id="categorys" class="tag_box list-unstyled collapse in">
+          
+  <li>
+    <li><a href="/categories/android/">android<span>1</span></a></li>
+  </li>
+
+    </ul>
+	</div>
+	
+
+	<!-- tags -->
+	
+	<div class="meta-widget">
+	<a data-toggle="collapse" data-target="#tags"><i class="fa fa-tags"></i></a>		  
+    <ul id="tags" class="tag_box list-unstyled collapse in">	  
+	    
+  <li><a href="/tags/android/">android<span>1</span></a></li> <li><a href="/tags/react-native/">react-native<span>1</span></a></li>
+    </ul>
+	</div>
+		
+
+	<!-- toc -->
+	<div class="meta-widget">
+	
+	</div>
+	
+    <hr>
+	
+</div><!-- col-md-3 -->
+
+	</div>
+		
+
+</div><!-- row -->
+
+
+
+	</div>
+  </div>
+  <div class="container-narrow">
+  <footer> <p>
+  &copy; 2017 supercocoa
+  
+      with help from <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="http://getbootstrap.com/" target="_blank">Twitter Bootstrap</a>. Theme by <a href="http://github.com/wzpan/hexo-theme-freemind/">Freemind</a>.    
+</p> </footer>
+</div> <!-- container-narrow -->
+  
+
+
+  
+<a id="gotop" href="#">   
+  <span>▲</span> 
+</a>
+
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script> 
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+
+
+   <script type="text/javascript">      
+     var search_path = "search.xml";
+	 if (search_path.length == 0) {
+	 	search_path = "search.xml";
+	 }
+	 var path = "/" + search_path;
+     searchFunc(path, 'local-search-input', 'local-search-result');
+   </script>
+
+</body>
+   </html>

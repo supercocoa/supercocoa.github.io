@@ -1,0 +1,262 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>用go写的格式化输出目录文件的小工具 | supercocoa&#39;s blog</title>
+  <meta name="author" content="supercocoa">
+  
+  <meta name="description" content="supercocoa&#39;s blog">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="用go写的格式化输出目录文件的小工具"/>
+  <meta property="og:site_name" content="supercocoa&#39;s blog"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  
+  
+    <link href="/myfavicon.png" rel="icon">
+  
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/themes/paper.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/font-awesome.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/responsive.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/highlight.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/google-fonts.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+  <script src="/js/jquery-2.0.3.min.js"></script>
+
+  <!-- analytics -->
+  
+
+
+
+</head>
+
+ <body>  
+  <nav id="main-nav" class="navbar  navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+      <button type="button" class="navbar-header navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+	<span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="/">supercocoa&#39;s blog</a>
+      <div class="collapse navbar-collapse nav-menu">
+		<ul class="nav navbar-nav">
+		  
+		  <li>
+			<a href="/archives" title="all the articles.">
+			  <i class="fa fa-archive"></i>archives
+			</a>
+		  </li>
+		  
+		  <li>
+			<a href="/tags" title="all the tags.">
+			  <i class="fa fa-tags"></i>tags
+			</a>
+		  </li>
+		  
+		</ul>
+      </div>
+    </div> <!-- container -->
+</nav>
+<div class="clearfix"></div>
+
+  <div class="container">
+  	<div class="content">
+    	 
+
+
+	
+		<div class="page-header ">		
+			<h1 class="title "> 用go写的格式化输出目录文件的小工具</h1>
+		</div>		
+	
+
+
+
+
+
+
+<div class="row post">
+	<!-- cols -->
+	
+	<div id="top_meta"></div>
+	<div class="col-md-9">
+	
+
+	<!-- content -->
+	<div class="mypage">		
+	  		
+
+	  <p>这两天用markdown写去年的总结，然后有很多的照片想加进来，发现一个个手写路径比较麻烦，而直接拖进来只有少数编辑器支持，而且一堆图片拖进来的话还是乱序，比较麻烦。</p>
+<p>于是用<code>go</code>写了个小程序，可以将目录下的文件按模板输出，还可以选择批量加入指定字符做分隔行。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">Usage of listdir:</div><div class="line">  -b string</div><div class="line">    	blank line by</div><div class="line">  -bn int</div><div class="line">    	blank line number</div><div class="line">  <span class="_">-f</span> string</div><div class="line">    	format: xxx___xxx</div><div class="line">  -p string</div><div class="line">    	path (default <span class="string">"./"</span>)</div></pre></td></tr></table></figure></p>
+<p>比如我这里就是将目录里的图片全部格式化成markdown的语法，并且每个中间插入3行<code>&lt;br /&gt;</code>做换行，然后输出到s.md中<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">listdir <span class="_">-f</span> <span class="string">"\![](___)"</span> -b <span class="string">"&lt;br /&gt;"</span> -bn 3 &gt; s.md</div></pre></td></tr></table></figure></p>
+<p>代码如下，也在<a href="https://gist.github.com/supercocoa/10fb7b81ae3853108ec1" target="_blank" rel="external">gist</a>上也放了一份。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> main</div><div class="line"></div><div class="line"><span class="keyword">import</span> (</div><div class="line">	<span class="string">"flag"</span></div><div class="line">	<span class="string">"fmt"</span></div><div class="line">	<span class="string">"io/ioutil"</span></div><div class="line">	<span class="string">"path/filepath"</span></div><div class="line">	<span class="string">"sort"</span></div><div class="line">	<span class="string">"strconv"</span></div><div class="line">	<span class="string">"strings"</span></div><div class="line">)</div><div class="line"></div><div class="line"><span class="keyword">const</span> (</div><div class="line">	<span class="comment">//PATTERN format by this pattern</span></div><div class="line">	PATTERN = <span class="string">"___"</span></div><div class="line">)</div><div class="line"></div><div class="line"><span class="keyword">var</span> path = flag.String(<span class="string">"p"</span>, <span class="string">"./"</span>, <span class="string">"path"</span>)</div><div class="line"><span class="keyword">var</span> format = flag.String(<span class="string">"f"</span>, <span class="string">""</span>, <span class="string">"format: xxx"</span>+PATTERN+<span class="string">"xxx"</span>)</div><div class="line"><span class="keyword">var</span> blankLine = flag.String(<span class="string">"b"</span>, <span class="string">""</span>, <span class="string">"blank line by"</span>)</div><div class="line"><span class="keyword">var</span> blankLineNum = flag.Int(<span class="string">"bn"</span>, <span class="number">0</span>, <span class="string">"blank line number"</span>)</div><div class="line"><span class="keyword">var</span> sortByNum = flag.Bool(<span class="string">"sn"</span>, <span class="literal">true</span>, <span class="string">"sort by num"</span>)</div><div class="line"></div><div class="line"><span class="keyword">type</span> ByNum []<span class="keyword">string</span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(paths ByNum)</span> <span class="title">Len</span><span class="params">()</span> <span class="title">int</span></span> &#123;</div><div class="line">	<span class="keyword">return</span> <span class="built_in">len</span>(paths)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(paths ByNum)</span> <span class="title">Swap</span><span class="params">(i, j <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">	paths[i], paths[j] = paths[j], paths[i]</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(paths ByNum)</span> <span class="title">Less</span><span class="params">(i, j <span class="keyword">int</span>)</span> <span class="title">bool</span></span> &#123;</div><div class="line">	pathi := filepath.Base(paths[i])</div><div class="line">	pathj := filepath.Base(paths[j])</div><div class="line">	namei := strings.Split(pathi, <span class="string">"."</span>)[<span class="number">0</span>]</div><div class="line">	namej := strings.Split(pathj, <span class="string">"."</span>)[<span class="number">0</span>]</div><div class="line">	numi, _ := strconv.Atoi(namei)</div><div class="line">	numj, _ := strconv.Atoi(namej)</div><div class="line">	<span class="keyword">return</span> numi &lt; numj</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">listDir</span><span class="params">(path *<span class="keyword">string</span>)</span> []<span class="title">string</span></span> &#123;</div><div class="line">	files, _ := ioutil.ReadDir(*path)</div><div class="line">	fileSlice := <span class="built_in">make</span>([]<span class="keyword">string</span>, <span class="built_in">len</span>(files))</div><div class="line"></div><div class="line">	absPath, _ := filepath.Abs(*path)</div><div class="line">	<span class="keyword">for</span> i, file := <span class="keyword">range</span> files &#123;</div><div class="line">		fileSlice[i] = absPath + <span class="string">"/"</span> + file.Name()</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="keyword">if</span> *sortByNum &#123;</div><div class="line">		sort.Sort(ByNum(fileSlice))</div><div class="line">	&#125; <span class="keyword">else</span> &#123;</div><div class="line">		sort.Strings(fileSlice)</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> fileSlice</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">formatStr</span><span class="params">(str *<span class="keyword">string</span>)</span> *<span class="title">string</span></span> &#123;</div><div class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(*format) &gt; <span class="number">0</span> &amp;&amp; strings.Contains(*format, PATTERN) &#123;</div><div class="line">		replace := strings.Replace(*format, PATTERN, *str, <span class="number">-1</span>)</div><div class="line">		<span class="keyword">return</span> &amp;replace</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> str</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</div><div class="line">	flag.Parse()</div><div class="line"></div><div class="line">	rets := listDir(path)</div><div class="line">	<span class="keyword">var</span> ret <span class="keyword">string</span></div><div class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(rets); i++ &#123;</div><div class="line">		ret = rets[i]</div><div class="line">		fmt.Println(*(formatStr(&amp;ret)))</div><div class="line">		<span class="keyword">if</span> i == <span class="built_in">len</span>(rets)<span class="number">-1</span> &#123;</div><div class="line">			<span class="keyword">break</span></div><div class="line">		&#125;</div><div class="line">		<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; *blankLineNum; i++ &#123;</div><div class="line">			fmt.Println(*blankLine)</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+	  
+	</div>
+
+	<div>
+  	<center>
+	<div class="pagination">
+<ul class="pagination">
+	 
+				
+    	<li class="prev"><a href="/2016/05/21/lua-c-bridge/" class="alignleft prev"><i class="fa fa-arrow-circle-o-left"></i>Prev</a></li>
+  		
+
+        <li><a href="/archives"><i class="fa fa-archive"></i>Archive</a></li>
+
+		
+		   <li class="next"><a href="/2015/10/24/shadowsocks-httpproxy/" class="alignright next">Next<i class="fa fa-arrow-circle-o-right"></i></a></li>         
+        
+	
+</ul>
+</div>
+
+    </center>
+	</div>
+
+    <!-- share -->
+    
+        
+    <div class="bdsharebuttonbox">
+        <a href="#" class="bds_more" data-cmd="more"></a>
+        <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+        <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+        <a href="#" class="bds_fbook" data-cmd="fbook" title="分享到Facebook"></a>
+        <a href="#" class="bds_twi" data-cmd="twi" title="分享到Twitter"></a>
+        <a href="#" class="bds_linkedin" data-cmd="linkedin" title="分享到linkedin"></a>
+        <a href="#" class="bds_evernotecn" data-cmd="evernotecn" title="分享到印象笔记"></a>
+        <a href="#" class="bds_youdao" data-cmd="youdao" title="分享到有道云笔记"></a>
+        <a href="#" class="bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+    </div>
+    <script>
+        window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"1","bdSize":"24"},"share":{}};
+        with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+    </script>
+
+
+        
+
+    
+	
+	<!-- comment -->
+	
+<section id="comment">
+  <h2 class="title">Comments</h2>
+
+  
+</section>
+
+	</div> <!-- col-md-9/col-md-12 -->
+		
+	
+	<div id="side_meta">
+		<div class="col-md-3" id="post_meta"> 
+
+	<!-- date -->
+	
+	<div class="meta-widget">
+	<i class="fa fa-clock-o"></i>
+	Jan 3 2016 
+	</div>
+	
+
+	<!-- categories -->
+    
+	<div class="meta-widget">
+	<a data-toggle="collapse" data-target="#categorys"><i class="fa fa-folder"></i></a>	
+    <ul id="categorys" class="tag_box list-unstyled collapse in">
+          
+  <li>
+    <li><a href="/categories/golang/">golang<span>1</span></a></li>
+  </li>
+
+    </ul>
+	</div>
+	
+
+	<!-- tags -->
+	
+	<div class="meta-widget">
+	<a data-toggle="collapse" data-target="#tags"><i class="fa fa-tags"></i></a>		  
+    <ul id="tags" class="tag_box list-unstyled collapse in">	  
+	    
+  <li><a href="/tags/golang/">golang<span>1</span></a></li> <li><a href="/tags/markdown/">markdown<span>1</span></a></li>
+    </ul>
+	</div>
+		
+
+	<!-- toc -->
+	<div class="meta-widget">
+	
+	</div>
+	
+    <hr>
+	
+</div><!-- col-md-3 -->
+
+	</div>
+		
+
+</div><!-- row -->
+
+
+
+	</div>
+  </div>
+  <div class="container-narrow">
+  <footer> <p>
+  &copy; 2017 supercocoa
+  
+      with help from <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="http://getbootstrap.com/" target="_blank">Twitter Bootstrap</a>. Theme by <a href="http://github.com/wzpan/hexo-theme-freemind/">Freemind</a>.    
+</p> </footer>
+</div> <!-- container-narrow -->
+  
+
+
+  
+<a id="gotop" href="#">   
+  <span>▲</span> 
+</a>
+
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script> 
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+
+
+   <script type="text/javascript">      
+     var search_path = "search.xml";
+	 if (search_path.length == 0) {
+	 	search_path = "search.xml";
+	 }
+	 var path = "/" + search_path;
+     searchFunc(path, 'local-search-input', 'local-search-result');
+   </script>
+
+</body>
+   </html>

@@ -1,0 +1,275 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>记macbook扩展到16g内存 | supercocoa&#39;s blog</title>
+  <meta name="author" content="supercocoa">
+  
+  <meta name="description" content="supercocoa&#39;s blog">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="记macbook扩展到16g内存"/>
+  <meta property="og:site_name" content="supercocoa&#39;s blog"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  
+  
+    <link href="/myfavicon.png" rel="icon">
+  
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/themes/paper.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/font-awesome.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/responsive.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/highlight.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/google-fonts.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+  <script src="/js/jquery-2.0.3.min.js"></script>
+
+  <!-- analytics -->
+  
+
+
+
+</head>
+
+ <body>  
+  <nav id="main-nav" class="navbar  navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+      <button type="button" class="navbar-header navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+	<span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="/">supercocoa&#39;s blog</a>
+      <div class="collapse navbar-collapse nav-menu">
+		<ul class="nav navbar-nav">
+		  
+		  <li>
+			<a href="/archives" title="all the articles.">
+			  <i class="fa fa-archive"></i>archives
+			</a>
+		  </li>
+		  
+		  <li>
+			<a href="/tags" title="all the tags.">
+			  <i class="fa fa-tags"></i>tags
+			</a>
+		  </li>
+		  
+		</ul>
+      </div>
+    </div> <!-- container -->
+</nav>
+<div class="clearfix"></div>
+
+  <div class="container">
+  	<div class="content">
+    	 
+
+
+	
+		<div class="page-header ">		
+			<h1 class="title "> 记macbook扩展到16g内存</h1>
+		</div>		
+	
+
+
+
+
+
+
+<div class="row post">
+	<!-- cols -->
+	
+	<div id="top_meta"></div>
+	<div class="col-md-9">
+	
+
+	<!-- content -->
+	<div class="mypage">		
+	  		
+
+	  <p>我的macbook小白是2010款，macbook最后一代，已经用了4年。中间想过卖掉换成pro，可一看pro的价钱，我又不想再买个13寸的，再加上这个绝版的还算漂亮的小白，就决定先扩展硬件再撑几年，等mac os不支持这款了再说。  期间更新过两次内存，先开始只有2g，升到了4g，后来又买了单根8g的，扩展到了10g。最近又觉得不够用，于是把又升了下级。</p>
+<h2 id="ssd"><a href="#ssd" class="headerlink" title="ssd"></a>ssd</h2><p>在升级内存前，先是看到说更换为ssd的提升比最大，可我又觉得128g的ssd太小，而且也不想倒腾原来的数据，最后发现可以把光驱拆下来，然后买个光驱托盘，把ssd嵌到里面，放到拆下来的光驱位置上。这样下来，反正现在光驱也没用，多了一个ssd，把系统安到ssd上，从ssd启动，开机速度飞快，再把各种软件和常用的文档也放到ssd下，之前的老爷机仿佛获得新生。</p>
+<p>更换ssd这里，没什么好说的，都是物理上的拆机更换零件。有一点需要注意，拆机的工具最好直接从淘宝上购买麦哲伦mac拆机工具套装，免得为找各种型号的螺丝刀折腾。</p>
+<h2 id="内存"><a href="#内存" class="headerlink" title="内存"></a>内存</h2><p>在更换了ssd后，其实整体感觉已经十分流畅了，但看着系统信息里的2+8，感觉十分的不对称，再加上开个ide chrome等内存杀手，内存使用一下飙到9g+，还是决定再来根8g的。</p>
+<p>不换还好，一换才发现有坑。</p>
+<p>我的macbook型号太老，只支持1067MHz频率ddr3的内存条，可现在市面上卖的单根8g都是1600的，拿过来插上两根1600的一开机就滴滴响，无法启动。之前的2+8没有问题，是因为8g的1600在2g的1067下会自动降频到1067。</p>
+<p>这下就要开始折腾了，网上google了一下，好在之前有强人遇到过这种问题（<a href="http://bbs.feng.com/read-htm-tid-2367368.html" target="_blank" rel="external">简单的修改让你1333的内存完美使用在374上</a>），办法是在win下(非虚拟机)利用软件将8g的那根内存条的spd信息改成1067，这样再来一根1600的就会自动降频到1067，也就可以和谐共处了。</p>
+<p>好，看上去也不算麻烦，就是安个win7用软件改下内存么，结果蛋疼的事情又来了…</p>
+<h2 id="win7"><a href="#win7" class="headerlink" title="win7"></a>win7</h2><p>之前把光驱换成了ssd，于是就想那就usb安个win7就行，可usb查到mac上，用bootcamp打开发现我这款老爷机无法用usb安win wtf.. 好在网上找到文章说可以改bootcamp pkg下的信息来绕过去（<a href="http://forums.macrumors.com/showthread.php?t=1680652" target="_blank" rel="external">How to Enable USB Install on Mavericks for unSupported Bootcamps</a>），但实际试了下发现还是不行，开机会找不到u盘。</p>
+<p>于是又反复google，找到了<a href="http://refit.sourceforge.net/" target="_blank" rel="external">refit</a>，这个扩展工具可以让mac在开机后自由选择启动盘，比系统本身的开机option要好用，有点像ubuntu的启动引导。</p>
+<p>但杯具的是，这次是找到了U盘，但按下从u盘启动安装又报了个什么错误，还是不行 (但rEFIt本身不错 留着以后可以很方便的在多系统间切换)。</p>
+<p>最后，反复google后(我的google能力还是不错的 经得起折腾…) 找到了可以通过虚拟机安装win7后直接copy到bootcamp的方法曲线救国（<a href="http://forums.macrumors.com/showthread.php?p=20584499#post20584499" target="_blank" rel="external">Install a Windows 7 partition on Mac OSX without Optical Drive or USB</a>）， 终于安上了win7…</p>
+<h2 id="改内存spd"><a href="#改内存spd" class="headerlink" title="改内存spd"></a>改内存spd</h2><p>有了win7后，就可以通过之前提到过的方法，用Thaiphoon这个工具修改8g内存条的spd即可，然后换下2g的，换上扩展的8g的，大功告成！</p>
+<h2 id="还有"><a href="#还有" class="headerlink" title="还有"></a>还有</h2><p>上面提到的步骤里需要几个工具，找这些工具的破解版又是一顿折腾，这里就不细说了。</p>
+<p>parallels / vmware-fusion  // 虚拟机 用于安装win7<br>vmdk mounter // 将虚拟机安装文盘挂载到mac上<br>winclone // 将挂载后的虚拟盘里的安装文件copy到bootcamp盘上 完成安装<br>thaiphoon // win下修改内存spd信息</p>
+<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>经过一番折腾(不想再来一次了)，总算是扩展到了16g内存，顺利开机，顿时有种驾驶ae86的感觉 ^_^</p>
+<p>成果图:</p>
+<p><img src="/img/mac_update_mem/mac_update_mem_1.png" alt=""></p>
+	  
+	</div>
+
+	<div>
+  	<center>
+	<div class="pagination">
+<ul class="pagination">
+	 
+				
+    	<li class="prev"><a href="/2015/09/26/react_native_android_js_bridge/" class="alignleft prev"><i class="fa fa-arrow-circle-o-left"></i>Prev</a></li>
+  		
+
+        <li><a href="/archives"><i class="fa fa-archive"></i>Archive</a></li>
+
+		
+          <li class="next disabled"><a>Next<i class="fa fa-arrow-circle-o-right"></i></a></li>
+        
+	
+</ul>
+</div>
+
+    </center>
+	</div>
+
+    <!-- share -->
+    
+        
+    <div class="bdsharebuttonbox">
+        <a href="#" class="bds_more" data-cmd="more"></a>
+        <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+        <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+        <a href="#" class="bds_fbook" data-cmd="fbook" title="分享到Facebook"></a>
+        <a href="#" class="bds_twi" data-cmd="twi" title="分享到Twitter"></a>
+        <a href="#" class="bds_linkedin" data-cmd="linkedin" title="分享到linkedin"></a>
+        <a href="#" class="bds_evernotecn" data-cmd="evernotecn" title="分享到印象笔记"></a>
+        <a href="#" class="bds_youdao" data-cmd="youdao" title="分享到有道云笔记"></a>
+        <a href="#" class="bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+    </div>
+    <script>
+        window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"1","bdSize":"24"},"share":{}};
+        with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+    </script>
+
+
+        
+
+    
+	
+	<!-- comment -->
+	
+<section id="comment">
+  <h2 class="title">Comments</h2>
+
+  
+</section>
+
+	</div> <!-- col-md-9/col-md-12 -->
+		
+	
+	<div id="side_meta">
+		<div class="col-md-3" id="post_meta"> 
+
+	<!-- date -->
+	
+	<div class="meta-widget">
+	<i class="fa fa-clock-o"></i>
+	Feb 8 2015 
+	</div>
+	
+
+	<!-- categories -->
+    
+	<div class="meta-widget">
+	<a data-toggle="collapse" data-target="#categorys"><i class="fa fa-folder"></i></a>	
+    <ul id="categorys" class="tag_box list-unstyled collapse in">
+          
+  <li>
+    <li><a href="/categories/mac/">mac<span>1</span></a></li>
+  </li>
+
+    </ul>
+	</div>
+	
+
+	<!-- tags -->
+	
+	<div class="meta-widget">
+	<a data-toggle="collapse" data-target="#tags"><i class="fa fa-tags"></i></a>		  
+    <ul id="tags" class="tag_box list-unstyled collapse in">	  
+	    
+  <li><a href="/tags/mac/">mac<span>1</span></a></li>
+    </ul>
+	</div>
+		
+
+	<!-- toc -->
+	<div class="meta-widget">
+	
+	</div>
+	
+    <hr>
+	
+</div><!-- col-md-3 -->
+
+	</div>
+		
+
+</div><!-- row -->
+
+
+
+	</div>
+  </div>
+  <div class="container-narrow">
+  <footer> <p>
+  &copy; 2017 supercocoa
+  
+      with help from <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="http://getbootstrap.com/" target="_blank">Twitter Bootstrap</a>. Theme by <a href="http://github.com/wzpan/hexo-theme-freemind/">Freemind</a>.    
+</p> </footer>
+</div> <!-- container-narrow -->
+  
+
+
+  
+<a id="gotop" href="#">   
+  <span>▲</span> 
+</a>
+
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script> 
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+
+
+   <script type="text/javascript">      
+     var search_path = "search.xml";
+	 if (search_path.length == 0) {
+	 	search_path = "search.xml";
+	 }
+	 var path = "/" + search_path;
+     searchFunc(path, 'local-search-input', 'local-search-result');
+   </script>
+
+</body>
+   </html>
